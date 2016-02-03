@@ -19,10 +19,14 @@ pip freeze
 """.lstrip()
 
 
+FILE_EXTENSIONS = ['.py', '.yaml', '.json']
+
+
 def munge_package(package):
     munged_package = PYTHON_RE.sub('', package)
     if '-' in munged_package:
-        return [munged_package.replace('-', '_'),
+        return [munged_package,
+                munged_package.replace('-', '_'),
                 munged_package.replace('-', '.')]
     return [munged_package]
 
@@ -63,7 +67,7 @@ def prune_packages(packages, aggressive):
                                     stdout=subprocess.PIPE)
             for line in proc.stdout:
                 file_name = line.split(':')[0]
-                if file_name.endswith('.py'):
+                if any(file_name.endswith(ext) for ext in FILE_EXTENSIONS):
                     saw_package = True
                     break
             if saw_package:
