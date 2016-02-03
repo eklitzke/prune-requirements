@@ -60,7 +60,7 @@ def prune_packages(packages, aggressive):
         saw_package = False
         for pkg in munge_package(package):
             proc = subprocess.Popen(['git', 'grep', '-i', pkg],
-            stdout=subprocess.PIPE)
+                                    stdout=subprocess.PIPE)
             for line in proc.stdout:
                 file_name = line.split(':')[0]
                 if file_name.endswith('.py'):
@@ -119,6 +119,14 @@ def iterate_all_packages(all_packages, requirements_txt):
     return not_needed
 
 
+def cleanup():
+    for f in ['candidate.txt', 'bootstrap.sh']:
+        try:
+            os.unlink(f)
+        except OSError:
+            pass
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--aggressive', action='store_true')
@@ -126,13 +134,16 @@ def main():
                         default='requirements.txt')
     parser.add_argument('bootstrap', nargs='*')
     args = parser.parse_args()
-    create_bootstrap_file(args.bootstrap)
-    with open(args.requirements_file) as requirements_txt:
-        packages = parse_requirements(requirements_txt)
-    packages = prune_packages(packages, args.aggressive)
-    not_needed = iterate_all_packages(packages, requirements_file)
-    print
-    print 'ALL NOT NEEDED'
-    print '=============='
-    for package in sorted(not_needed):
-        print package
+    try:
+        create_bootstrap_file(args.bootstrap)
+        with open(args.requirements_file) as requirements_txt:
+            packages = parse_requirements(requirements_txt)
+        packages = prune_packages(packages, args.aggressive)
+        not_needed = iterate_all_packages(packages, args.requirements_file)
+        print
+        print 'ALL NOT NEEDED'
+        print '=============='
+        for package in sorted(not_needed):
+            print package
+    finally:
+        cleanup()
