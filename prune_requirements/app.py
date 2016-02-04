@@ -105,7 +105,7 @@ def try_package(not_needed, requirements_txt, package_name):
         return True
 
 
-def iterate_all_packages(all_packages, requirements_txt):
+def iterate_all_packages(all_packages, requirements_txt, max_iterations):
     not_needed = set()
     iteration = 1
     while True:
@@ -120,6 +120,8 @@ def iterate_all_packages(all_packages, requirements_txt):
             break
         else:
             iteration += 1
+        if max_iterations != -1 and iteration > max_iterations:
+            break
     return not_needed
 
 
@@ -134,6 +136,7 @@ def cleanup():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--aggressive', action='store_true')
+    parser.add_argument('-i', '--iterate', action='store_true')
     parser.add_argument('-r', '--requirements-file',
                         default='requirements.txt')
     parser.add_argument('bootstrap', nargs='*')
@@ -143,7 +146,9 @@ def main():
         with open(args.requirements_file) as requirements_txt:
             packages = parse_requirements(requirements_txt)
         packages = prune_packages(packages, args.aggressive)
-        not_needed = iterate_all_packages(packages, args.requirements_file)
+        iterations = -1 if args.iterate else 1
+        not_needed = iterate_all_packages(
+            packages, args.requirements_file, iterations)
         print
         print 'ALL NOT NEEDED'
         print '=============='
